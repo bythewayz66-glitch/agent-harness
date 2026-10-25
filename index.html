@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Harness — Multi-Agent Orchestration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+<div id="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">🛰️</div>
+      <div>
+        <div class="title">Agent Harness</div>
+        <div class="sub">Orchestration OS</div>
+      </div>
+    </div>
+
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" data-view="dashboard"><span class="ic">📊</span> Dashboard</div>
+    <div class="nav-item" data-view="orchestrator"><span class="ic">🧠</span> Orchestrator</div>
+
+    <div class="nav-label">Composition</div>
+    <div class="nav-item" data-view="agents"><span class="ic">🤖</span> Agents <span class="badge" id="navAgentCount">0</span></div>
+    <div class="nav-item" data-view="pipelines"><span class="ic">🏗️</span> Pipelines <span class="badge" id="navPipeCount">0</span></div>
+    <div class="nav-item" data-view="workspace"><span class="ic">📁</span> Workspace <span class="badge" id="navFileCount">0</span></div>
+
+    <div class="nav-label">Resources</div>
+    <div class="nav-item" data-view="keys"><span class="ic">🔑</span> API Keys <span class="badge" id="navKeyCount">0</span></div>
+    <div class="nav-item" data-view="mcp"><span class="ic">🔌</span> MCP Servers <span class="badge" id="navMcpCount">0</span></div>
+    <div class="nav-item" data-view="apis"><span class="ic">🔗</span> APIs <span class="badge" id="navApiCount">0</span></div>
+    <div class="nav-item" data-view="tools"><span class="ic">🧰</span> Tools &amp; Skills</div>
+
+    <div class="nav-label">Execution</div>
+    <div class="nav-item" data-view="console"><span class="ic">▶️</span> Run Console</div>
+
+    <div class="sidebar-foot">
+      <div id="modeFoot">Mode: <b>Single</b></div>
+      <div style="margin-top:4px;opacity:.7">v1.0 · local-first</div>
+    </div>
+  </aside>
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+      <div>
+        <h1 id="viewTitle">Dashboard</h1>
+        <div class="crumb" id="viewCrumb">Overview of your agent harness</div>
+      </div>
+      <div class="mode-switch" id="modeSwitch">
+        <button class="mode-btn active" data-mode="single"><span class="dot"></span>Single</button>
+        <button class="mode-btn" data-mode="swarm"><span class="dot"></span>Swarm</button>
+        <button class="mode-btn" data-mode="mix"><span class="dot"></span>Mix of Agents</button>
+      </div>
+      <span class="pill" id="backendPill" title="LLM proxy status"><span class="dot"></span>checking</span>
+    </div>
+
+    <div class="content" id="content">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section class="view active" id="view-dashboard">
+        <div class="stat-grid">
+          <div class="stat-box"><div class="v indigo" id="stAgents">0</div><div class="l">Agents</div></div>
+          <div class="stat-box"><div class="v cyan" id="stFiles">0</div><div class="l">Workspace Files</div></div>
+          <div class="stat-box"><div class="v amber" id="stMcp">0</div><div class="l">MCP Servers</div></div>
+          <div class="stat-box"><div class="v green" id="stApis">0</div><div class="l">APIs</div></div>
+        </div>
+
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-head"><div class="ic">🧠</div><h2>Orchestrator</h2><span class="desc">System prompt &amp; routing</span></div>
+            <div id="dashOrch"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="ic">🎛️</div><h2>Active Mode</h2><span class="desc">Current topology</span></div>
+            <div id="dashMode"></div>
+          </div>
+        </div>
+
+        <div class="card mt-12">
+          <div class="card-head"><div class="ic">🤖</div><h2>Agent Roster</h2><span class="desc">Click an agent to edit</span></div>
+          <div class="agents-grid" id="dashAgents"></div>
+        </div>
+      </section>
+
+      <!-- ============ ORCHESTRATOR ============ -->
+      <section class="view" id="view-orchestrator">
+        <div id="modeSettingsBanner" class="hint-box mb-12"></div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-head"><div class="ic">🧠</div><h2>Orchestrator Configuration</h2></div>
+            <label class="field">
+              <span class="lbl">Name <span class="hint">shown in logs</span></span>
+              <input type="text" id="orchName" placeholder="Orchestrator">
+            </label>
+            <label class="field">
+              <span class="lbl">Model</span>
+              <select id="orchModel">
+                <option>gpt-4o</option><option>gpt-4o-mini</option><option>claude-3.5-sonnet</option>
+                <option>claude-3-opus</option><option>gemini-1.5-pro</option><option>llama-3.1-70b</option>
+                <option>mistral-large</option><option>local:ollama</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="lbl">LLM Provider <span class="hint">keyless · throttled</span></span>
+              <select id="orchProvider">
+                <option value="pollinations">Pollinations.ai (keyless · throttled)</option>
+                <option value="simulated">Simulated (no network)</option>
+              </select>
+            </label>
+            <div id="throttleStatus" class="hint-box" style="margin-bottom:14px">
+              <span class="hi">⏱️</span>
+              <div>Hard throttle: <b>1 request / 30s</b> across all agents. <span id="throttleLive" class="muted"></span></div>
+            </div>
+            <label class="field">
+              <span class="lbl">Temperature <span class="hint" id="orchTempVal">0.4</span></span>
+              <input type="range" id="orchTemp" min="0" max="1" step="0.05" value="0.4" style="width:100%;accent-color:var(--accent)">
+            </label>
+            <label class="field">
+              <span class="lbl">Max Delegation Depth <span class="hint">swarm recursion limit</span></span>
+              <input type="number" id="orchDepth" min="1" max="12" value="4">
+            </label>
+            <label class="field" id="orchMaxAgentsField">
+              <span class="lbl">Max Agents <span class="hint">0 = use whole roster</span></span>
+              <input type="number" id="orchMaxAgents" min="0" max="12" value="0">
+            </label>
+            <label class="field" style="display:flex;align-items:center;gap:10px">
+              <input type="checkbox" id="orchReviewer" style="width:16px;height:16px;accent-color:var(--accent)">
+              <span class="lbl" style="margin:0">Run a reviewer pass before synthesis</span>
+            </label>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div class="ic">📝</div><h2>System Prompt</h2><span class="desc">Defines orchestration behavior</span></div>
+            <label class="field">
+              <span class="lbl">Orchestrator system prompt <span class="hint">Markdown supported</span></span>
+              <textarea id="orchPrompt" style="min-height:300px"></textarea>
+            </label>
+            <div class="flex gap-8">
+              <button class="btn primary" id="saveOrch">💾 Save Orchestrator</button>
+              <button class="btn ghost" id="resetOrch">↺ Reset to default</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ AGENTS ============ -->
+      <section class="view" id="view-agents">
+        <div class="run-bar">
+          <button class="btn primary" id="addAgentBtn">＋ Add Agent</button>
+          <button class="btn" id="importBtn">⬇ Import Agents</button>
+          <button class="btn" id="exportBtn">⬆ Export Agents</button>
+          <div class="stat" style="margin-left:auto">Mode: <b id="agentModeLabel">Single</b></div>
+        </div>
+        <div id="modeNotice"></div>
+        <div class="agents-grid" id="agentsGrid"></div>
+      </section>
+
+      <!-- ============ PIPELINES ============ -->
+      <section class="view" id="view-pipelines">
+        <div class="run-bar">
+          <button class="btn primary" id="addPipelineBtn">＋ New Blueprint</button>
+          <button class="btn" id="seedPipelinesBtn">✨ Load Starter Blueprints</button>
+          <div class="stat" style="margin-left:auto">Agents can attach pipelines as tools</div>
+        </div>
+        <div class="hint-box mb-12"><span class="hi">🏗️</span><div><b>Content pipelines</b> are reusable production blueprints — 3D models, audio assets, video, images, music, copy. Attach one to an agent and it gains the full stage-by-stage workflow plus the tools each stage needs.</div></div>
+        <div class="pipe-grid" id="pipeGrid"></div>
+      </section>
+
+      <!-- ============ API KEYS ============ -->
+      <section class="view" id="view-keys">
+        <div class="run-bar">
+          <button class="btn primary" id="addKeyBtn">＋ Add Custom Key</button>
+          <div class="stat" id="keyThrottleStat">Pollinations: <b style="color:var(--amber)">throttled 1/30s</b></div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head">
+            <div class="ic">🛰️</div><h2>Runtime &amp; Backend</h2><span class="desc">How LLM calls are routed</span>
+            <span class="pill" id="runtimePill" style="margin-left:auto"><span class="dot"></span>checking</span>
+          </div>
+          <div class="hint-box" id="runtimeHint" style="margin:0 0 12px"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+            <label class="field" style="flex:1 1 320px;margin:0">
+              <span class="lbl">Backend URL <span class="hint">optional — e.g. https://your-harness.onrender.com</span></span>
+              <input type="text" id="backendUrlInput" placeholder="blank = call providers directly from the browser">
+            </label>
+            <button class="btn primary" id="saveBackendBtn">Save</button>
+            <button class="btn" id="testBackendBtn">Test</button>
+          </div>
+          <div class="hint-box" style="margin:12px 0 0"><span class="hi">📦</span><div>Keyed calls work <b>without</b> a backend — the browser talks straight to Anthropic, Gemini, Groq, OpenRouter, Mistral, Together, DeepSeek, xAI and Perplexity, all of which send CORS headers. Add a backend only if you want keys to stay server-side or need the shared 1/30s keyless throttle. Deploy files (<code>Dockerfile</code>, <code>render.yaml</code>, <code>fly.toml</code>, <code>railway.json</code>) ship with the project.</div></div>
+        </div>
+        <div class="hint-box mb-12"><span class="hi">🔑</span><div>Keys are stored locally in your browser and sent only to the provider you're calling — never to a third party. A <b>Pollinations pollen key</b> removes the 30s throttle entirely.</div></div>
+        <div class="key-grid" id="keyGrid"></div>
+      </section>
+
+      <!-- ============ WORKSPACE ============ -->
+      <section class="view" id="view-workspace">
+        <div class="run-bar">
+          <button class="btn primary" id="newFileBtn">＋ New File</button>
+          <button class="btn" id="uploadBtn">⬆ Upload</button>
+          <button class="btn" id="downloadAllBtn">⬇ Download All</button>
+          <div class="stat">Shared by <b id="wsAgentCount">0</b> agents</div>
+          <div class="stat">Read / Write: <b style="color:var(--green)">Enabled</b></div>
+        </div>
+        <div class="ws-layout">
+          <div class="file-tree" id="fileTree"></div>
+          <div class="editor-pane">
+            <div class="editor-head">
+              <span class="fi" id="edFileIcon">📄</span>
+              <span class="fname" id="edFileName">— no file selected —</span>
+              <span class="who" id="edFileWho"></span>
+            </div>
+            <div id="edPreview" class="hidden"></div>
+            <textarea id="edFileContent" placeholder="Select or create a file to begin editing…" disabled></textarea>
+            <div class="editor-foot">
+              <button class="btn primary sm" id="saveFileBtn" disabled>💾 Save</button>
+              <button class="btn danger sm" id="delFileBtn" disabled>🗑 Delete</button>
+              <button class="btn sm ghost" id="dlFileBtn" disabled>⬇</button>
+              <span class="muted" style="font-size:11px;margin-left:auto" id="edFileStat"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ MCP ============ -->
+      <section class="view" id="view-mcp">
+        <div class="run-bar">
+          <button class="btn primary" id="addMcpBtn">＋ Attach MCP Server</button>
+          <button class="btn" id="ghMcpBtn">🐙 Find on GitHub</button>
+          <div class="stat">Shared across all agents</div>
+        </div>
+        <div class="list" id="mcpList"></div>
+      </section>
+
+      <!-- ============ APIS ============ -->
+      <section class="view" id="view-apis">
+        <div class="run-bar">
+          <button class="btn primary" id="addApiBtn">＋ Attach API</button>
+          <div class="stat">Shared across all agents</div>
+        </div>
+        <div class="list" id="apiList"></div>
+      </section>
+
+      <!-- ============ TOOLS ============ -->
+      <section class="view" id="view-tools">
+        <div class="card mb-12">
+          <div class="card-head"><div class="ic">🧰</div><h2>Builtin Tools</h2><span class="desc">Available to every agent</span></div>
+          <div class="tile-grid" id="toolsGrid"></div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head">
+            <div class="ic">⚡</div><h2>Skills</h2><span class="desc">Higher-level capabilities</span>
+            <button class="btn sm" id="ghSkillBtn" style="margin-left:auto">🐙 Find on GitHub</button>
+          </div>
+          <div class="tile-grid" id="skillsGrid"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="ic">🧩</div><h2>Apps &amp; Integrations</h2><span class="desc">Callable by agents</span>
+            <button class="btn sm" id="ghAppBtn" style="margin-left:auto">🐙 Find on GitHub</button>
+          </div>
+          <div class="tile-grid" id="appsGrid"></div>
+        </div>
+      </section>
+
+      <!-- ============ CONSOLE ============ -->
+      <section class="view" id="view-console">
+        <div class="run-bar">
+          <button class="btn primary" id="runBtn">▶ Run Task</button>
+          <button class="btn" id="clearLogBtn">🧹 Clear</button>
+          <div class="stat">Mode: <b id="consoleMode">Single</b></div>
+          <div class="stat">Agents: <b id="consoleAgents">0</b></div>
+          <div class="stat">LLM: <b id="consoleProvider">pollinations</b> · <b style="color:var(--amber)">1/30s</b></div>
+        </div>
+        <div class="console">
+          <div class="console-head">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <span class="ctitle">agent-harness ~ orchestration log</span>
+          </div>
+          <div class="console-body" id="consoleBody"></div>
+          <div class="console-foot">
+            <span class="mono" style="color:var(--muted-2)">$</span>
+            <input type="text" id="taskInput" placeholder="Describe a task, e.g. 'Build a landing page and write copy'…">
+            <button class="btn primary sm" id="sendTaskBtn">Send</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal wide" id="modalBox">
+    <div class="modal-head">
+      <h3 id="modalTitle">Title</h3>
+      <button class="x" id="modalClose">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

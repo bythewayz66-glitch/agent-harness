@@ -1,0 +1,31 @@
+# Fly.io — https://fly.io/docs/reference/configuration/
+# 1. fly launch --no-deploy --name agent-harness-<yourname>
+# 2. fly deploy
+# 3. Copy https://agent-harness-<yourname>.fly.dev into the app's Backend URL
+app = "agent-harness"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8091"
+
+[http_service]
+  internal_port = 8091
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "5s"
+    method = "GET"
+    path = "/api/llm/status"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

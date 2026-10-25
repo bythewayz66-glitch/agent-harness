@@ -1,0 +1,15 @@
+# Render blueprint — https://render.com/docs/blueprint-spec
+# 1. Push this repo to GitHub
+# 2. Render → New → Blueprint → pick the repo
+# 3. Copy the service URL into the app's "Backend URL" field
+services:
+  - type: web
+    name: agent-harness
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/llm/status
+    envVars:
+      - key: PORT
+        value: 8091
+    autoDeploy: true

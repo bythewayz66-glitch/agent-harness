@@ -1,0 +1,29 @@
+# --- runtime / agent sandbox artifacts (never publish) ---
+.browser_data/
+.psiphon_data/
+.screenshots/
+.agent_hooks/
+outputs/
+summarized_conversations/
+__pycache__/
+*.pyc
+
+# --- local helper scripts ---
+gh_poll.sh
+t_*.py
+
+# --- build output (Pages serves from repo root) ---
+dist/
+
+# --- secrets ---
+.env
+.env.*
+*.pem
+*.key
+hosts.yml
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

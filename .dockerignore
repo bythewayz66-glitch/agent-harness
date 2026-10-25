@@ -1,0 +1,11 @@
+.git
+.browser_data
+.psiphon_data
+.screenshots
+.agent_hooks
+__pycache__
+outputs
+summarized_conversations
+t_*.py
+*.md
+!README.md
